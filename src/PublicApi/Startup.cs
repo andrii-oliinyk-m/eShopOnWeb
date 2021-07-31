@@ -13,7 +13,6 @@ using Microsoft.eShopWeb.ApplicationCore.Services;
 using Microsoft.eShopWeb.Infrastructure.Data;
 using Microsoft.eShopWeb.Infrastructure.Identity;
 using Microsoft.eShopWeb.Infrastructure.Logging;
-using Microsoft.eShopWeb.Infrastructure.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -38,10 +37,10 @@ namespace Microsoft.eShopWeb.PublicApi
         public void ConfigureDevelopmentServices(IServiceCollection services)
         {
             // use in-memory database
-            ConfigureInMemoryDatabases(services);
+            // ConfigureInMemoryDatabases(services);
 
             // use real database
-            //ConfigureProductionServices(services);
+            ConfigureProductionServices(services);
         }
 
         public void ConfigureDockerServices(IServiceCollection services)
@@ -66,11 +65,13 @@ namespace Microsoft.eShopWeb.PublicApi
             // Requires LocalDB which can be installed with SQL Server Express 2016
             // https://www.microsoft.com/en-us/download/details.aspx?id=54284
             services.AddDbContext<CatalogContext>(c =>
-                c.UseSqlServer(Configuration.GetConnectionString("CatalogConnection")));
+               c.UseSqlServer(Configuration.GetConnectionString("CatalogConnection"),
+                  x => x.MigrationsHistoryTable("Catalog_MigrationsHistoryTable", "ef")));
 
             // Add Identity DbContext
             services.AddDbContext<AppIdentityDbContext>(options =>
-                options.UseSqlServer(Configuration.GetConnectionString("IdentityConnection")));
+               options.UseSqlServer(Configuration.GetConnectionString("IdentityConnection"),
+                  x => x.MigrationsHistoryTable("Identity_MigrationsHistoryTable", "ef")));
 
             ConfigureServices(services);
         }

@@ -1,0 +1,91 @@
+let randomSuffix=718486630 #$RANDOM*$RANDOM
+
+location=westeurope
+resourceGroup=rg-eShopOnWebApp-$randomSuffix
+az configure --defaults group="$resourceGroup" location="$location"
+
+echo "#--------------------------------------------------"
+echo "# Create Resource Group"
+echo "#--------------------------------------------------"
+
+az group create --name $resourceGroup
+
+echo "#--------------------------------------------------"
+echo "# Create WEB API"
+echo "#--------------------------------------------------"
+webApiPlanName=plan-eShopOnWeb-WebAPI-$randomSuffix
+webApiAppName=ase-eShopOnWeb-WebAPI-$randomSuffix
+
+az appservice plan create --name $webApiPlanName --sku S1
+az webapp create --name $webApiAppName --plan $webApiPlanName
+az webapp config appsettings set \
+	--name $webApiAppName \
+	--settings ASPNETCORE_ENVIRONMENT=Development
+echo "#--------------------------------------------------"
+echo "# Create Web App Instance #1"
+echo "#--------------------------------------------------"
+webAppPlanName1=plan-eShopOnWeb-1-$randomSuffix
+webAppName1=ase-eShopOnWeb-1-$randomSuffix
+
+az appservice plan create --name $webAppPlanName1 --sku S1
+az webapp create --name $webAppName1 --plan $webAppPlanName1
+az webapp config appsettings set \
+	--name $webAppName1 \
+	--settings ASPNETCORE_ENVIRONMENT=Development 
+echo "#--------------------------------------------------"
+echo "# Create Web App Instance #2"
+echo "#--------------------------------------------------"
+webAppPlanName2=plan-eShopOnWeb-2-$randomSuffix
+webAppName2=ase-eShopOnWeb-2-$randomSuffix
+
+az appservice plan create --name $webAppPlanName2 --sku S1
+az webapp create --name $webAppName2 --plan $webAppPlanName2
+az webapp config appsettings set \
+	--name $webAppName2 \
+	--settings ASPNETCORE_ENVIRONMENT=Development
+echo "#--------------------------------------------------"
+echo "# Create AzureSql Server"
+echo "#--------------------------------------------------"
+AzureSqlServerName=sql-eShopOnWeb-$randomSuffix
+AzureSqlDatabaseName=sqldb-eShopOnWeb-$randomSuffix
+AzureSqlAdminUser=sa1
+AzureSqlAdminPassword=s1@3%44--+As
+startClientIP=0.0.0.0
+endClientIP=0.0.0.0
+
+az sql server create \
+    --name $AzureSqlServerName \
+    --admin-user $AzureSqlAdminUser \
+    --admin-password $AzureSqlAdminPassword
+
+az sql server firewall-rule create \
+    --server $AzureSqlServerName \
+    --name AllowClientIp \
+    --start-ip-address $startClientIP --end-ip-address $endClientIP
+
+az sql db create \
+    --name $AzureSqlDatabaseName \
+    --server $AzureSqlServerName \
+    --collation SQL_Latin1_General_CP1_CI_AS \
+    --service-objective Basic
+echo "#--------------------------------------------------"
+echo "# Intergate Web Instances and Web API with AzureSQL"
+echo "#--------------------------------------------------"
+azureSqlConnectionString=$(az sql db show-connection-string --name $AzureSqlDatabaseName --server $AzureSqlServerName --client ado.net --output tsv)
+azureSqlConnectionString=${azureSqlConnectionString//<username>/$AzureSqlAdminUser}
+azureSqlConnectionString=${azureSqlConnectionString//<password>/$AzureSqlAdminPassword}
+
+az webapp config connection-string set \
+	--name $webAppName1 \
+	--connection-string-type SQLAzure \
+    --settings "CatalogConnection=$azureSqlConnectionString" "IdentityConnection=$azureSqlConnectionString"
+
+az webapp config connection-string set \
+	--name $webAppName2 \
+	--connection-string-type SQLAzure \
+    --settings "CatalogConnection=$azureSqlConnectionString" "IdentityConnection=$azureSqlConnectionString"
+
+az webapp config connection-string set \
+	--name $webApiAppName \
+	--connection-string-type SQLAzure \
+    --settings "CatalogConnection=$azureSqlConnectionString" "IdentityConnection=$azureSqlConnectionString"
