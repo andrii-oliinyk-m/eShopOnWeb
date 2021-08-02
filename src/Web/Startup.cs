@@ -114,6 +114,11 @@ namespace Microsoft.eShopWeb.Web
                                        .AddDefaultTokenProviders();
 
             services.AddScoped<ITokenClaimsService, IdentityTokenClaimService>();
+            services.AddHttpClient("OrderDeliveryProcessorHttpClient", c =>
+            {
+	            c.BaseAddress = new Uri((string)Configuration.GetValue(typeof(string), "OrderDeliveryProcessorUrl"));
+            });
+
 
             services.AddCoreServices(Configuration);
             services.AddWebServices(Configuration);

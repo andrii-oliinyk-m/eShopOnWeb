@@ -89,3 +89,47 @@ az webapp config connection-string set \
 	--name $webApiAppName \
 	--connection-string-type SQLAzure \
     --settings "CatalogConnection=$azureSqlConnectionString" "IdentityConnection=$azureSqlConnectionString"
+echo "#--------------------------------------------------"
+echo "# Storage Account"
+echo "#--------------------------------------------------"
+storageAccountName=steshoponwb$randomSuffix
+az storage account create --name $storageAccountName --sku Standard_LRS
+echo "#--------------------------------------------------"
+echo "# Delivery Order Processor: Cosmos DB"
+echo "#--------------------------------------------------"
+cosmosDbAccountName=cosmos-delivery-order-processor-$randomSuffix
+
+az cosmosdb create --name $cosmosDbAccountName
+
+cosmosDbEndpoint=$(az cosmosdb show --name $cosmosDbAccountName --query documentEndpoint --output tsv)
+cosmosDbKey=$(az cosmosdb list-keys --name $cosmosDbAccountName --query primaryMasterKey --output tsv)
+echo "#--------------------------------------------------"
+echo "# Delivery Order Processor: Function App"
+echo "#--------------------------------------------------"
+deliveryOrderProcessorFuncAppName=func-delivery-order-processor-$randomSuffix
+
+az functionapp create \
+    --name $deliveryOrderProcessorFuncAppName \
+    --storage-account $storageAccountName \
+    --consumption-plan-location $location \
+    --os-type Windows \
+    --disable-app-insights true \
+    --functions-version 3
+
+az functionapp config appsettings set \
+    --name $deliveryOrderProcessorFuncAppName \
+    --settings \
+        COSMOSDB_ACCOUNT_ENDPOINT=$cosmosDbEndpoint \
+        COSMOSDB_ACCOUNT_KEY=$cosmosDbKey \
+        COSMOSDB_DATABASE_NAME="eShopOnWebApp" \
+        COSMOSDB_COLLECTION_NAME="Orders"
+echo "#--------------------------------------------------"
+echo "# Intergate Web Instances and Delivery Order Processor"
+echo "#--------------------------------------------------"
+az webapp config appsettings set \
+	--name $webAppName1 \
+	--settings "OrderDeliveryProcessorUrl=https://$deliveryOrderProcessorFuncAppName.azurewebsites.net"
+
+az webapp config appsettings set \
+	--name $webAppName2 \
+	--settings "OrderDeliveryProcessorUrl=https://$deliveryOrderProcessorFuncAppName.azurewebsites.net"

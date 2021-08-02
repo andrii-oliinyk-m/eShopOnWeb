@@ -12,6 +12,7 @@ namespace Microsoft.eShopWeb.ApplicationCore.Services
     public class OrderService : IOrderService
     {
         private readonly IAsyncRepository<Order> _orderRepository;
+        private readonly IOrderDeliveryProcessor<Order> _orderDeliveryProcessor;
         private readonly IUriComposer _uriComposer;
         private readonly IAsyncRepository<Basket> _basketRepository;
         private readonly IAsyncRepository<CatalogItem> _itemRepository;
@@ -19,9 +20,11 @@ namespace Microsoft.eShopWeb.ApplicationCore.Services
         public OrderService(IAsyncRepository<Basket> basketRepository,
             IAsyncRepository<CatalogItem> itemRepository,
             IAsyncRepository<Order> orderRepository,
+            IOrderDeliveryProcessor<Order> orderDeliveryProcessor,
             IUriComposer uriComposer)
         {
             _orderRepository = orderRepository;
+            _orderDeliveryProcessor = orderDeliveryProcessor;
             _uriComposer = uriComposer;
             _basketRepository = basketRepository;
             _itemRepository = itemRepository;
@@ -49,6 +52,7 @@ namespace Microsoft.eShopWeb.ApplicationCore.Services
             var order = new Order(basket.BuyerId, shippingAddress, items);
 
             await _orderRepository.AddAsync(order);
+            await _orderDeliveryProcessor.SaveDocAsync(order);
         }
     }
 }

@@ -6,6 +6,7 @@ Goal:
 		for the Web project (two instances), 
 		for Public Api project,
 	Install Azure SQL server and Azure SQL Database
+	Install OrderDeliveryProcessor infrastructure
 --------------------------------------------------------
 Actions:
 	Run AzureInstallation.azcli in the Cloud Shell.
@@ -17,6 +18,7 @@ Goal:
 	Deploy the database schema to the Azure SQL Database.
 --------------------------------------------------------
 Actions:
+	Set the firewall rule to allow access to the SQL Database from Client IP.
 	Set ConnectionStrings:CatalogConnection in appsettings.Development.json in the Web project.
 	Set ConnectionStrings:IdentityConnection in appsettings.Development.json in the Web project.
 	Run locally ./Apply-Migrations.bat.
@@ -25,17 +27,12 @@ Step 3.
 ========================================================
 Goal:
 	Setup a dependency from Blazor to Public Api.
+	Publish Web Instance #1, Instance#2, PublicApi
 --------------------------------------------------------
 Actions:
 	Set baseUrls:apiBase in appsettings.Development.json in the Blazor project.
 		--> baseUrls:apiBase must be set to the url of the web api application.
-========================================================
-Step 3.
-========================================================
-Goal:
-	Publish Web Instance #1, Instance#2, PublicApi
---------------------------------------------------------
-Actions:
 	Publish Web Instance #1.
 	Publish Web Instance #2.
 	Publish PublicApi
+

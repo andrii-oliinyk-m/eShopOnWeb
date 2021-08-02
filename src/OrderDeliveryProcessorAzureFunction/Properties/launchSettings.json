@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "OrderDeliveryProcessorAzureFunction": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "APP_ACCOUNT_ENDPOINT": "https://eshop-cosmos-db-account.documents.azure.com:443/",
+        "APP_ACCOUNT_KEY": "dA764nt3JKCIA4RVWb7S7PU2rieelx9ZMPP2XtKXldLwAKv5yUg7FAVOJVkZWpygc39VyxMd3CCAlRMyB8hO7g=="
+      }
+    }
+  }
+}
