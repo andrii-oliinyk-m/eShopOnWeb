@@ -120,7 +120,7 @@ az functionapp config appsettings set \
         SERVICE_BUS_CONNECTION_STRING=$orderItemsReservationServiceBusConnectionString \
         SERVICE_BUS_QUEUE_NAME=$orderItemsReservationQueueName \
         EMAIL_ADDRESS="" \
-        LOGIC_APP_URI="" \
+        LOGIC_APP_URI=""
 echo "#--------------------------------------------------"
 echo "# Create WEB API"
 echo "#--------------------------------------------------"
