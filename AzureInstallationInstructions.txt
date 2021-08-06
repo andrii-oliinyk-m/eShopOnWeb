@@ -7,6 +7,7 @@ Goal:
 		for Public Api project,
 	Install Azure SQL server and Azure SQL Database
 	Install OrderDeliveryProcessor infrastructure
+	Install OrderItemsReserver infrastructure
 --------------------------------------------------------
 Actions:
 	Run AzureInstallation.azcli in the Cloud Shell.
@@ -35,4 +36,21 @@ Actions:
 	Publish Web Instance #1.
 	Publish Web Instance #2.
 	Publish PublicApi
-
+========================================================
+Step 4. OrderItemsReserver
+========================================================
+Goal:
+	Create Logic App logic-OrderReservationFailed-718486630
+	iNTEGRATE IT WITH func-orderreserver718486630.
+--------------------------------------------------------
+Actions:
+	1. Create HTTP request Trigger.
+		Schema:
+		{
+			"To": "<email-address>",
+			"Subject": "<email-subject>",
+			"Order": "<email-body>"
+		}
+	2. Create an action to send a email to my gmail account.
+	3. Set setting LOGIC_APP_URI of func-orderreserver718486630 to the HTTP request Trigger's url.
+	4. Set setting EMAIL_ADDRESS of func-orderreserver718486630 to a correct email address.

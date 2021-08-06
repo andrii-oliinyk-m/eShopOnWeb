@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "OrderItemsReserverAzureFunction": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "APP_ORDERS_CONTAINER_NAME": "order-items-reservation"
+      },
+      "jsWebView2Debugging": false
+    }
+  }
+}

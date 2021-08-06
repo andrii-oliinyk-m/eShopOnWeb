@@ -26,6 +26,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Mime;
+using Microsoft.eShopWeb.Infrastructure.OrderItemsReservation;
 
 namespace Microsoft.eShopWeb.Web
 {
@@ -97,6 +98,9 @@ namespace Microsoft.eShopWeb.Web
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+	        services.Configure<OrderItemsReservationOptions>(Configuration.GetSection(
+		        OrderItemsReservationOptions.ConfigurationSectionName));
+
             services.AddCookieSettings();
 
 
@@ -118,7 +122,6 @@ namespace Microsoft.eShopWeb.Web
             {
 	            c.BaseAddress = new Uri((string)Configuration.GetValue(typeof(string), "OrderDeliveryProcessorUrl"));
             });
-
 
             services.AddCoreServices(Configuration);
             services.AddWebServices(Configuration);
