@@ -11,39 +11,6 @@ echo "#--------------------------------------------------"
 az group create --name $resourceGroup
 
 echo "#--------------------------------------------------"
-echo "# Create WEB API"
-echo "#--------------------------------------------------"
-webApiPlanName=plan-eShopOnWeb-WebAPI-$randomSuffix
-webApiAppName=ase-eShopOnWeb-WebAPI-$randomSuffix
-
-az appservice plan create --name $webApiPlanName --sku S1
-az webapp create --name $webApiAppName --plan $webApiPlanName
-az webapp config appsettings set \
-	--name $webApiAppName \
-	--settings ASPNETCORE_ENVIRONMENT=Development
-echo "#--------------------------------------------------"
-echo "# Create Web App Instance #1"
-echo "#--------------------------------------------------"
-webAppPlanName1=plan-eShopOnWeb-1-$randomSuffix
-webAppName1=ase-eShopOnWeb-1-$randomSuffix
-
-az appservice plan create --name $webAppPlanName1 --sku S1
-az webapp create --name $webAppName1 --plan $webAppPlanName1
-az webapp config appsettings set \
-	--name $webAppName1 \
-	--settings ASPNETCORE_ENVIRONMENT=Development 
-echo "#--------------------------------------------------"
-echo "# Create Web App Instance #2"
-echo "#--------------------------------------------------"
-webAppPlanName2=plan-eShopOnWeb-2-$randomSuffix
-webAppName2=ase-eShopOnWeb-2-$randomSuffix
-
-az appservice plan create --name $webAppPlanName2 --sku S1
-az webapp create --name $webAppName2 --plan $webAppPlanName2
-az webapp config appsettings set \
-	--name $webAppName2 \
-	--settings ASPNETCORE_ENVIRONMENT=Development
-echo "#--------------------------------------------------"
 echo "# Create AzureSql Server"
 echo "#--------------------------------------------------"
 AzureSqlServerName=sql-eShopOnWeb-$randomSuffix
@@ -68,32 +35,18 @@ az sql db create \
     --server $AzureSqlServerName \
     --collation SQL_Latin1_General_CP1_CI_AS \
     --service-objective Basic
-echo "#--------------------------------------------------"
-echo "# Intergate Web Instances and Web API with AzureSQL"
-echo "#--------------------------------------------------"
+
 azureSqlConnectionString=$(az sql db show-connection-string --name $AzureSqlDatabaseName --server $AzureSqlServerName --client ado.net --output tsv)
 azureSqlConnectionString=${azureSqlConnectionString//<username>/$AzureSqlAdminUser}
 azureSqlConnectionString=${azureSqlConnectionString//<password>/$AzureSqlAdminPassword}
-
-az webapp config connection-string set \
-	--name $webAppName1 \
-	--connection-string-type SQLAzure \
-    --settings "CatalogConnection=$azureSqlConnectionString" "IdentityConnection=$azureSqlConnectionString"
-
-az webapp config connection-string set \
-	--name $webAppName2 \
-	--connection-string-type SQLAzure \
-    --settings "CatalogConnection=$azureSqlConnectionString" "IdentityConnection=$azureSqlConnectionString"
-
-az webapp config connection-string set \
-	--name $webApiAppName \
-	--connection-string-type SQLAzure \
-    --settings "CatalogConnection=$azureSqlConnectionString" "IdentityConnection=$azureSqlConnectionString"
 echo "#--------------------------------------------------"
 echo "# Storage Account"
 echo "#--------------------------------------------------"
 storageAccountName=steshoponwb$randomSuffix
+
 az storage account create --name $storageAccountName --sku Standard_LRS
+
+storageAccountConnectionString="$(az storage account show-connection-string --name $storageAccountName --query connectionString --output tsv)"
 echo "#--------------------------------------------------"
 echo "# Delivery Order Processor: Cosmos DB"
 echo "#--------------------------------------------------"
@@ -106,7 +59,7 @@ cosmosDbKey=$(az cosmosdb list-keys --name $cosmosDbAccountName --query primaryM
 echo "#--------------------------------------------------"
 echo "# Delivery Order Processor: Function App"
 echo "#--------------------------------------------------"
-deliveryOrderProcessorFuncAppName=func-delivery-order-processor-$randomSuffix
+deliveryOrderProcessorFuncAppName=func-deliveryprocessor$randomSuffix
 
 az functionapp create \
     --name $deliveryOrderProcessorFuncAppName \
@@ -124,12 +77,64 @@ az functionapp config appsettings set \
         COSMOSDB_DATABASE_NAME="eShopOnWebApp" \
         COSMOSDB_COLLECTION_NAME="Orders"
 echo "#--------------------------------------------------"
-echo "# Intergate Web Instances and Delivery Order Processor"
+echo "# Create WEB API"
 echo "#--------------------------------------------------"
+webApiPlanName=plan-eShopOnWeb-WebAPI-$randomSuffix
+webApiAppName=ase-eShopOnWeb-WebAPI-$randomSuffix
+
+az appservice plan create --name $webApiPlanName --sku S1
+az webapp create --name $webApiAppName --plan $webApiPlanName
+
+az webapp config connection-string set \
+	--name $webApiAppName \
+	--connection-string-type SQLAzure \
+    --settings \
+        ASPNETCORE_ENVIRONMENT=Development \
+        "CatalogConnection=$azureSqlConnectionString" \
+        "IdentityConnection=$azureSqlConnectionString"
+echo "#--------------------------------------------------"
+echo "# Create Web App Instance #1"
+echo "#--------------------------------------------------"
+webAppPlanName1=plan-eShopOnWeb-1-$randomSuffix
+webAppName1=ase-eShopOnWeb-1-$randomSuffix
+
+az appservice plan create --name $webAppPlanName1 --sku S1
+az webapp create --name $webAppName1 --plan $webAppPlanName1
+
 az webapp config appsettings set \
 	--name $webAppName1 \
-	--settings "OrderDeliveryProcessorUrl=https://$deliveryOrderProcessorFuncAppName.azurewebsites.net"
+	--settings \
+        ASPNETCORE_ENVIRONMENT=Development \
+        "OrderDeliveryProcessorUrl=https://$deliveryOrderProcessorFuncAppName.azurewebsites.net" \
+        "OrderItemsReservationQueue__ServiceBusConnectionString=$orderItemsReservationServiceBusConnectionString" \
+	    "OrderItemsReservationQueue__QueueName=$orderItemsReservationQueueName"
+
+az webapp config connection-string set \
+	--name $webAppName1 \
+	--connection-string-type SQLAzure \
+    --settings \
+        "CatalogConnection=$azureSqlConnectionString" \
+        "IdentityConnection=$azureSqlConnectionString"
+echo "#--------------------------------------------------"
+echo "# Create Web App Instance #2"
+echo "#--------------------------------------------------"
+webAppPlanName2=plan-eShopOnWeb-2-$randomSuffix
+webAppName2=ase-eShopOnWeb-2-$randomSuffix
+
+az appservice plan create --name $webAppPlanName2 --sku S1
+az webapp create --name $webAppName2 --plan $webAppPlanName2
 
 az webapp config appsettings set \
 	--name $webAppName2 \
-	--settings "OrderDeliveryProcessorUrl=https://$deliveryOrderProcessorFuncAppName.azurewebsites.net"
+	--settings \
+        ASPNETCORE_ENVIRONMENT=Development \
+        "OrderDeliveryProcessorUrl=https://$deliveryOrderProcessorFuncAppName.azurewebsites.net" \
+        "OrderItemsReservationQueue__ServiceBusConnectionString=$orderItemsReservationServiceBusConnectionString" \
+	    "OrderItemsReservationQueue__QueueName=$orderItemsReservationQueueName"
+
+az webapp config connection-string set \
+	--name $webAppName2 \
+	--connection-string-type SQLAzure \
+    --settings \
+        "CatalogConnection=$azureSqlConnectionString" \
+        "IdentityConnection=$azureSqlConnectionString"
