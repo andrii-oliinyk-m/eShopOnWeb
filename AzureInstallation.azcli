@@ -160,13 +160,16 @@ az webapp config connection-string set \
     --settings \
         "CatalogConnection=$azureSqlConnectionString" \
         "IdentityConnection=$azureSqlConnectionString"
+
+webAppId1=$(az webapp show --name $webAppName1 --query id --out tsv)
 echo "#--------------------------------------------------"
 echo "# Create Web App Instance #2"
 echo "#--------------------------------------------------"
 webAppPlanName2=plan-eShopOnWeb-2-$randomSuffix
+webAppPlanNameRegion2=eastus
 webAppName2=ase-eShopOnWeb-2-$randomSuffix
 
-az appservice plan create --name $webAppPlanName2 --sku S1
+az appservice plan create --name $webAppPlanName2 --sku S1 --location $webAppPlanNameRegion2
 az webapp create --name $webAppName2 --plan $webAppPlanName2
 
 az webapp config appsettings set \
@@ -183,3 +186,31 @@ az webapp config connection-string set \
     --settings \
         "CatalogConnection=$azureSqlConnectionString" \
         "IdentityConnection=$azureSqlConnectionString"
+
+webAppId2=$(az webapp show --name $webAppName2 --query id --out tsv)
+echo "#--------------------------------------------------"
+echo "# Create Create Traffic Manager profile"
+echo "#--------------------------------------------------"	
+trafficManagerProfile=traf-eShopOnWeb-$randomSuffix
+webAppName=traf-eShopOnWeb-$randomSuffix
+webApp1EndPoint=WebApp1
+webApp2EndPoint=WebApp2
+
+az network traffic-manager profile create \
+  --name $trafficManagerProfile \
+  --routing-method Priority \
+  --unique-dns-name $webAppName
+
+az network traffic-manager endpoint create \
+  --name $webApp1EndPoint \
+  --profile-name $trafficManagerProfile \
+  --type azureEndpoints \
+  --priority 1 \
+  --target-resource-id $webAppId1
+
+az network traffic-manager endpoint create \
+  --name $webApp2EndPoint \
+  --profile-name $trafficManagerProfile \
+  --type azureEndpoints \
+  --priority 2 \
+  --target-resource-id $webAppId2

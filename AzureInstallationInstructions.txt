@@ -8,6 +8,7 @@ Goal:
 	Install Azure SQL server and Azure SQL Database
 	Install OrderDeliveryProcessor infrastructure
 	Install OrderItemsReserver infrastructure
+	Install Traffic Manager Profile
 --------------------------------------------------------
 Actions:
 	Run AzureInstallation.azcli in the Cloud Shell.
@@ -36,6 +37,8 @@ Actions:
 	Publish Web Instance #1.
 	Publish Web Instance #2.
 	Publish PublicApi
+	Publish OrderDeliveryProcessor
+	Publich OrderItemsReserver
 ========================================================
 Step 4. OrderItemsReserver
 ========================================================
