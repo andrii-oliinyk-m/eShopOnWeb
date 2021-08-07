@@ -11,6 +11,15 @@ echo "#--------------------------------------------------"
 az group create --name $resourceGroup
 
 echo "#--------------------------------------------------"
+echo "# Create Container Registry"
+echo "#--------------------------------------------------"
+containerRegistry=arceShopOnWebContainers$randomSuffix
+
+az acr create \
+	--name $containerRegistry \
+	--sku Standard \
+	--admin-enabled true
+echo "#--------------------------------------------------"
 echo "# Create AzureSql Server"
 echo "#--------------------------------------------------"
 AzureSqlServerName=sql-eShopOnWeb-$randomSuffix
@@ -121,22 +130,22 @@ az functionapp config appsettings set \
         SERVICE_BUS_QUEUE_NAME=$orderItemsReservationQueueName \
         EMAIL_ADDRESS="" \
         LOGIC_APP_URI=""
-echo "#--------------------------------------------------"
-echo "# Create WEB API"
-echo "#--------------------------------------------------"
-webApiPlanName=plan-eShopOnWeb-WebAPI-$randomSuffix
-webApiAppName=ase-eShopOnWeb-WebAPI-$randomSuffix
-
-az appservice plan create --name $webApiPlanName --sku S1
-az webapp create --name $webApiAppName --plan $webApiPlanName
-
-az webapp config connection-string set \
-	--name $webApiAppName \
-	--connection-string-type SQLAzure \
-    --settings \
-        ASPNETCORE_ENVIRONMENT=Development \
-        "CatalogConnection=$azureSqlConnectionString" \
-        "IdentityConnection=$azureSqlConnectionString"
+#echo "#--------------------------------------------------"
+#echo "# Create WEB API"
+#echo "#--------------------------------------------------"
+#webApiPlanName=plan-eShopOnWeb-WebAPI-$randomSuffix
+#webApiAppName=ase-eShopOnWeb-WebAPI-$randomSuffix
+#
+#az appservice plan create --name $webApiPlanName --sku S1
+#az webapp create --name $webApiAppName --plan $webApiPlanName
+#
+#az webapp config connection-string set \
+#	--name $webApiAppName \
+#	--connection-string-type SQLAzure \
+#    --settings \
+#        ASPNETCORE_ENVIRONMENT=Development \
+#        "CatalogConnection=$azureSqlConnectionString" \
+#        "IdentityConnection=$azureSqlConnectionString"
 echo "#--------------------------------------------------"
 echo "# Create Web App Instance #1"
 echo "#--------------------------------------------------"

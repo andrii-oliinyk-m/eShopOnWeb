@@ -1,0 +1,45 @@
+let randomSuffix=718486630 #$RANDOM*$RANDOM
+
+location=westeurope
+resourceGroup=rg-eShopOnWebApp-$randomSuffix
+az configure --defaults group="$resourceGroup" location="$location"
+
+echo "#--------------------------------------------------"
+echo "# Create WEB API"
+echo "#--------------------------------------------------"
+webApiPlanName=plan-eShopOnWeb-WebAPI-$randomSuffix
+webApiAppName=ase-eShopOnWeb-WebAPI-$randomSuffix
+
+az appservice plan create \
+	--name $webApiPlanName \
+	--sku B1 \
+	--is-linux
+
+containerRegistry=arceShopOnWebContainers$randomSuffix
+	
+az webapp create \
+	--name $webApiAppName \
+	--plan $webApiPlanName \
+	--deployment-container-image-name "$containerRegistry.azurecr.io/publicapi:latest"
+
+AzureSqlServerName=sql-eShopOnWeb-$randomSuffix
+AzureSqlDatabaseName=sqldb-eShopOnWeb-$randomSuffix
+AzureSqlAdminUser=sa1
+AzureSqlAdminPassword=s1@3%44--+As
+azureSqlConnectionString=$(az sql db show-connection-string --name $AzureSqlDatabaseName --server $AzureSqlServerName --client ado.net --output tsv)
+azureSqlConnectionString=${azureSqlConnectionString//<username>/$AzureSqlAdminUser}
+azureSqlConnectionString=${azureSqlConnectionString//<password>/$AzureSqlAdminPassword}
+
+az webapp config connection-string set \
+	--name $webApiAppName \
+	--connection-string-type SQLAzure \
+	--settings \
+		ASPNETCORE_ENVIRONMENT=Development \
+		"CatalogConnection=$azureSqlConnectionString" \
+		"IdentityConnection=$azureSqlConnectionString"
+
+
+#acr_server_url="https://$(az acr show --name secureacr2021 --query loginServer --output tsv)"
+#acr_username=$(az acr credential show --name secureacr2021 --query username --output tsv)
+#acr_password=$(az acr credential show --name secureacr2021 --query passwords[0].value --output tsv)
+#az webapp config appsettings set --name secureacrweb2021 --settings DOCKER_REGISTRY_SERVER_URL=$acr_server_url DOCKER_REGISTRY_SERVER_USERNAME=$acr_username DOCKER_REGISTRY_SERVER_PASSWORD=$acr_password

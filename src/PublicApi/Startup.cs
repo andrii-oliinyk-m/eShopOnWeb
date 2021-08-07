@@ -45,7 +45,7 @@ namespace Microsoft.eShopWeb.PublicApi
 
         public void ConfigureDockerServices(IServiceCollection services)
         {
-            ConfigureDevelopmentServices(services);
+            ConfigureProductionServices(services);
         }
 
         private void ConfigureInMemoryDatabases(IServiceCollection services)
