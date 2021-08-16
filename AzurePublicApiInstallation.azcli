@@ -12,15 +12,20 @@ webApiAppName=ase-eShopOnWeb-WebAPI-$randomSuffix
 
 az appservice plan create \
 	--name $webApiPlanName \
-	--sku B1 \
+	--sku S1 \
 	--is-linux
 
 containerRegistry=arceShopOnWebContainers$randomSuffix
-	
+containerRegistryUrl=$(az acr show --name $containerRegistry --query loginServer --output tsv)
+containerRegistryUsername=$(az acr credential show --name $containerRegistry --query username --output tsv)
+containerRegistryPassword=$(az acr credential show --name $containerRegistry --query passwords[0].value --output tsv)
+
 az webapp create \
 	--name $webApiAppName \
 	--plan $webApiPlanName \
-	--deployment-container-image-name "$containerRegistry.azurecr.io/publicapi:latest"
+	--deployment-container-image-name "$containerRegistryUrl/publicapi:latest" \
+	--docker-registry-server-user $containerRegistryUsername \
+	--docker-registry-server-password $containerRegistryPassword
 
 AzureSqlServerName=sql-eShopOnWeb-$randomSuffix
 AzureSqlDatabaseName=sqldb-eShopOnWeb-$randomSuffix

@@ -13,7 +13,6 @@ Goal:
 --------------------------------------------------------
 Actions:
 	Run AzureInstallation.azcli in the Cloud Shell.
-	Go to Azure Sql Database and set the firewall rule for the client IP.
 ========================================================
 Step 2.
 ========================================================
